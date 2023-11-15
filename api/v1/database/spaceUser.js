@@ -5,6 +5,7 @@ const sch = new Schema({
   UserId: String,
 	muteDuration: String,
 	isBanned: String,
+	isMuted: Boolean,
 	banReason: String,
 	SpaceBanId: String,
 	banDuration: String

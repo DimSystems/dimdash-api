@@ -12,6 +12,8 @@ const moment = require("moment");
 require("moment-duration-format");
 const server = http.createServer(app);
 
+let users = require("./database/users.js")
+
 module.exports = client => {
 
     // <SESSION & CORS> //
@@ -125,15 +127,13 @@ module.exports = client => {
 
       // <AUTHORIZATION> //
       app.use(async (req, res, next) => {
-        if (req.path.includes("/v1/auth/login")) return next();
-        if (req.path.includes("/v1/auth/callback")) return next();
+        // if (req.path.includes("/v1/auth/login")) return next();
+        // if (req.path.includes("/v1/auth/callback")) return next();
+
 
         if (!req.query["_token"]) return next();
         const _loadUser = await users.findOne({ token: req.query["_token"] }, { _id: 0, __v: 0 });
         if (!_loadUser || !_loadUser.profile) return next();
-
-        const _ware = await middleware(_loadUser, req.locale);
-        if (_ware) return res.json({ success: false, message: _ware, data: null });
 
         req.userAuth = _loadUser.profile;
         req._user = _loadUser;
@@ -175,7 +175,6 @@ module.exports = client => {
     // // </AUTHORIZATION CHECK> //
 
     app.get("/__/guilds", async (req, res) => {
-        if (!req._user || !(req._user.permissions || []).some(_p => _p == "**")) return res.status(404).end();
         try {
             let { min, max } = req.query;
             let guilds = [];
@@ -201,7 +200,80 @@ module.exports = client => {
         }
     });
 
+    // <CUSTOM ROUTES> //
+    app.get("/v1/invite/callback", (req, res) => {
+        res.redirect(config.website.protocol + "://" + config.website.domain + config.website.invite);
+    });
 
+    app.get("/v1/invite/_callback", (req, res) => {
+        res.redirect("http://192.168.1.91:424/" + config.website.invite);
+    });
+
+    app.get("/v1/invite/bot", (req, res) => {
+        if (!req.query["__w"]) return res.redirect(config.auth.discord.botInvite + (req.query["__beta"] === "true" ? ("&redirect_uri=http://192.168.1.91:3000/dashboard/added") : "&redirect_uri=http://192.168.1.91:3000/") + (req.query["disable_select"] ? ("&disable_guild_select=true") : "") + (req.query["id"] ? ("&guild_id=" + req.query["id"]) : ""));
+        res.redirect(config.auth.discord.botInvite + (req.query["__beta"] === "true" ? "&redirect_uri=http://192.168.1.91:424/v1/invite/_callback" : "&redirect_uri=http://192.168.1.91:424/v1/invite/callback") + (req.query["disable_select"] ? ("&disable_guild_select=true") : "") + (req.query["id"] ? ("&guild_id=" + req.query["id"]) : ""));
+    });
+
+    // <GUILD CHECK> //
+    const __guildCheck = require("./guild/check.js")(client);
+    app.use("/v1/guilds", __guildCheck);
+    // </GUILD CHECK> //
+
+      // <GUILD CHECK> //
+      const __guildConfig = require("./guild/configuration.js")(client);
+      app.use("/v1/guilds", __guildConfig);
+      // </GUILD CHECK> //
+  
+
+    const __userProfile = require("./user/id.js")(client);
+    app.use("/v1/user", __userProfile);
+
+
+    /* Space EndPoints */
+
+    const __spaceSummary = require("./space/index.js")(client);
+    app.use("/v1/spaces", __spaceSummary);
+
+
+    const __spaceBanAdd = require("./space/punishments/ban/add.js")(client);
+    app.use("/v1/spaces", __spaceBanAdd);
+
+    const __spaceBanRemove = require("./space/punishments/ban/remove.js")(client);
+    app.use("/v1/spaces", __spaceBanRemove);
+
+
+    const __spaceBanList = require("./space/punishments/ban/list.js")(client);
+    app.use("/v1/spaces", __spaceBanList);
+
+    const __spaceMuteAdd = require("./space/punishments/mute/add.js")(client);
+    app.use("/v1/spaces", __spaceMuteAdd);
+
+    const __spaceMuteList = require("./space/punishments/mute/list.js")(client);
+    app.use("/v1/spaces", __spaceMuteList);
+
+    const __spaceMuteRemove = require("./space/punishments/mute/remove.js")(client);
+    app.use("/v1/spaces", __spaceMuteRemove);
+
+    const __spaceKickAdd = require("./space/punishments/kick/add.js")(client);
+    app.use("/v1/spaces", __spaceKickAdd);
+
+    const __spaceWarnAdd = require("./space/punishments/warn/add.js")(client);
+    app.use("/v1/spaces", __spaceWarnAdd);
+
+    /* Space APIS */
+
+    const __spaceApiResponse = require("./space/api/autoresponse/index.js")(client);
+    app.use("/v1/spaces", __spaceApiResponse);
+
+    const __spaceApiResponseBans = require("./space/api/autoresponse/ban.js")(client);
+    app.use("/v1/spaces", __spaceApiResponseBans);
+
+    const __spaceApiResponseMutes = require("./space/api/autoresponse/mute.js")(client);
+    app.use("/v1/spaces", __spaceApiResponseMutes);
+
+
+
+    
 
      // <AUTH & CONNECTIONS> //
      const __auths = require("./auth/index.js")({ router: app, path: config.authPath, connectionsPath: config.connectionsPath, client });
@@ -221,8 +293,8 @@ module.exports = client => {
     // </404> //
 
     // <LISTEN SERVER> //
-    server.listen(process.env.PORT || 575, () => {
-        console.log("(!) Server listening at ::" + (process.env.PORT || 575) + " port!");
+    server.listen(process.env.PORT || 424, () => {
+        console.log("(!) Server listening at ::" + (process.env.PORT || 424) + " port!");
     });
     // </LISTE
 }

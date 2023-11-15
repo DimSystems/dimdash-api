@@ -1,3 +1,5 @@
+const async = require("async")
+
 module.exports = (router, path, users, passport, config, fetch, Discord, client) => {
     router.get(path + "/login", (req, res, next) => {
         if (req.query["extension"]) req.session._extension = req.query["extension"];
@@ -25,14 +27,105 @@ module.exports = (router, path, users, passport, config, fetch, Discord, client)
             const _token = `${await tokenGen(50)}`;
 
             if (!_userToken) {
-                await users.updateOne({ user: req.user.id }, {
-                    profile: req.user,
-                    token: _token
-                }, { upsert: true });
+
+                var spaceArray = [];
+
+               
+
+                await  async.map(req.user.guilds, async (gu) => {
+
+                    let modalSpace = require("../../database/space");
+                    let modalRole = require("../../database/spaceRole")
+                    let dataSpace = await modalSpace.find({
+                        GuildId: gu.id
+                    })
+
+                    await async.forEach(dataSpace, async (space) => {
+                        let dataRole = await modalRole.findOne({
+                            CatagoryId: space.CatagoryId
+                        })
+
+                       let checkUserPermms = await client.guilds.cache.get(gu.id).members.fetch(`${req.user.id}`)
+
+
+                        if(checkUserPermms.roles.cache.has(dataRole.OwnerId) || checkUserPermms.roles.cache.has(dataRole.AdminId)){
+
+                            const _userToken2 = await users.findOne({ user: req.user.id, spaces: [space] });
+      
+                            if(_userToken2) return;
+                            
+
+                             await users.updateOne({ user: req.user.id }, {
+                                $push: {
+                                    spaces: space
+                                }
+                            }, { upsert: true });
+                        } else {
+                            return;
+                        }
+                    })
+
+                }).finally(async () => {
+                    await users.updateOne({ user: req.user.id }, {
+                        profile: req.user,
+                        token: _token,
+                        spaces: spaceArray
+                    }, { upsert: true });
+                })
+         
+
             } else {
-                await users.updateOne({ user: req.user.id }, {
-                    profile: req.user
-                }, { upsert: true });
+
+                var spaceArray = []
+
+                await  async.map(req.user.guilds, async (gu) => {
+
+                    let modalSpace = require("../../database/space");
+                    let modalRole = require("../../database/spaceRole")
+                    let dataSpace = await modalSpace.find({
+                        GuildId: gu.id
+                    })
+
+                
+                    await async.map(dataSpace, async (space) => {
+
+                     
+
+                        let dataRole = await modalRole.findOne({
+                            CatagoryId: space.CatagoryId
+                        })
+
+
+                        if(dataRole == null) return res.json({
+                            success: false,
+                            message: "CONFIGURE_ROLE_REQUIRED - Configure your space roles for"+space.spaceName,
+                            data: null
+                        })
+
+                       let checkUserPermms = await client.guilds.cache.get(gu.id).members.fetch(`${req.user.id}`)
+
+
+                        if(checkUserPermms.roles.cache.has(dataRole.OwnerId) || checkUserPermms.roles.cache.has(dataRole.AdminId)){
+                            const _userToken2 = await users.findOne({ user: req.user.id, spaces: [space] });
+      
+                            if(_userToken2) return;
+
+                             await users.updateOne({ user: req.user.id }, {
+                                $push: {
+                                    spaces: space
+                                }
+                            }, { upsert: true });
+                        } else {
+                            return;
+                        }
+                    })
+                }).finally(async () => {
+                    await users.updateOne({ user: req.user.id }, {
+                        profile: req.user,
+                    }, { upsert: true });
+                })
+
+               
             };
 
             res.cookie("user_key", _userToken ? _userToken.token : _token, {
@@ -47,7 +140,7 @@ module.exports = (router, path, users, passport, config, fetch, Discord, client)
             //         );
 
             res.redirect(
-                ('http://192.168.1.91:575/' + config.website.callback) +
+                ('http://localhost:3000' + config.website.callback) +
                              ("?_code=" + (_userToken ? _userToken.token : _token)) +
                             ("&url=" + (req.session["_redir"] || "/"))
             )
@@ -61,27 +154,28 @@ module.exports = (router, path, users, passport, config, fetch, Discord, client)
 
     router.get(path + "/me", async (req, res) => {
         try {
-            let _user = req.user;
+            let findToken = req.query['user_key'];
+            let _user = await users.findOne({ token: findToken });
             if(_user ==  null) return res.json({
                 success: false,
                 message: "You aren't logged in."
             })
             let _dbUser = req._user;
-            let _guilds = _user.guilds || [];
+            let _guilds = _user.profile.guilds || [];
 
             await _guilds.forEach((guild, index) => {
                 const _perms = guild.permissions_new;
                 const _checkBot = client.guilds.cache.get(guild.id);
                 _guilds[index].bot_added = _checkBot ? true : false;
-                _guilds[index].permissions = new Discord.Permissions(_perms).toArray();
+                _guilds[index].permissions = new Discord.PermissionsBitField(_perms).toArray();
             });
 
-            delete _user.accessToken;
-            _user.guilds = _guilds;
+            delete _user.profile.accessToken;
+            _user.profile.guilds = _guilds;
 
             res.json({
                 success: true,
-                message: "Worked successfully",
+                message: "User data.",
                 data: _user
             });
         } catch (err) {
