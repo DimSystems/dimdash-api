@@ -62,6 +62,7 @@ async function startSystem() {
 
 startSystem();
 
-setInterval(() => {
-  process.exit();
+setTimeout(() => {
+  code = 0; 
+  process.exit(code);
 }, 5000)
