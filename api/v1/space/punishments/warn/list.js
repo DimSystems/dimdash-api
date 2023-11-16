@@ -4,22 +4,12 @@ const users = require("../../../database/users.js");
 const modelUserWarn = require("../../../database/spaceUserWarn.js")
 const express = require("express");
 const router = express.Router();
-const { ChannelType } = require("discord.js");
+const async = require("async")
 
 module.exports = client => {
-    router.post("/:id/punishments/warn/edit", async (req, res) => {
+    router.get("/:id/punishments/warn/listbyuser", async (req, res) => {
 
         try {
-            let warnId = req.body["data"].warnId;
-            let reason = req.body["data"].warnReason || "Not specified"
-            let warnDate = req.body["data"].warnDate
-            let warnDate2 = req.body["data"].warnDate2
-    
-            if(warnId == null) return res.json({
-                success: false,
-                message: "User Id is null"
-            })
-     
             let findSpace = await spaceModal.findOne({
                 CatagoryId: req.params["id"]
              })   
@@ -46,44 +36,37 @@ module.exports = client => {
              if(checkPerms.roles.cache.has(findSpacePerms.OwnerId) || checkPerms.roles.cache.has(findSpacePerms.AdminId)){
 
 
-                let findWarn = await modelUserWarn.findOne({
-                    WarnId: warnId
-                })
-             
+                let findWarn = await modelUserWarn.find();
+            
                 const guild = client.guilds.cache.get(findSpace.GuildId);
 				const member = await guild.members.fetch(findWarn.UserId);
 
                 if(member.roles.cache.has(findSpacePerms.MemberId)) {
 
+                    let warnArray = [];
 
-                    if(findWarn == null) return res.json({
-                        success: false,
-                        message: "Warning does not exist anymore."
-                    })
+                async.forEach(findWarn, async (wrn) => {
+                    
+                    let findUserP = await client.guilds.cache.get(findSpace.GuildId).members.fetch(`${wrn.UserId}`);
 
-					if (warnDate) {
+                    Object.assign(wrn, findUserP);
 
-                       await modelUserWarn.findOneAndUpdate({ WarnId: warnId, SpaceId: findSpace.CatagoryId }, { WarnReason: reason, warnDuration: warnDate })
+                    warnArray.push(wrn)
 
-						client.users.send(userId, `Your warn from ${findSpace.spaceName} [${warnId}] has been editted. Both the date and reason have been updated [${reason}] <t:${warnDate2}:R>`);
+                }).finally(() => {
+                
+                return res.json({
+                
+                success: true,
+                message: "Found all warns by user id",
+                data: {
+                    warnList: warnArray
+                }
+                
+                })
 
-                        res.json({
-                            success: true,
-                            message: `Warning to ${member.user.username} has been editted successfully [TEMPORARY]`,
-                            id: warnId
-                        })
+                })
 
-					} else {
-                        await modelUserWarn.findOneAndUpdate({ WarnId: warnId, SpaceId: findSpace.CatagoryId }, { WarnReason: reason })
-
-						client.users.send(userId, `Your warn from ${findSpace.spaceName} [${warnId}] has been editted.The reason have been updated [${reason}]`);
-
-                        res.json({
-                            success: true,
-                            message: `Warning to ${member.user.username} has been added successfully [PERMANANTLY]`,
-                            data: warnId
-                        })
-					}
 
 				} else {
                     return res.json({

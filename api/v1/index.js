@@ -1,114 +1,60 @@
 // const users = require("../../database/models/users.js");
 const config = require("../../config.js");
-const cookieParser = require('cookie-parser');
-const session = require("express-session");
-const bodyParser = require("body-parser");
-const Discord = require("discord.js");
 const express = require("express");
-const cors = require("cors");
 const http = require("http");
-const app = express();
-const moment = require("moment");
+const app = express.Router();
 require("moment-duration-format");
-const server = http.createServer(app);
 
 let users = require("./database/users.js")
 
 module.exports = client => {
 
-    // <SESSION & CORS> //
-    app.use(
-        session({
-            secret: config.sessionKey,
-            resave: false,
-            saveUninitialized: false
-        })
-    );
-
-    app.set("trust proxy", 1);
-    app.use(cookieParser())
-    app.use(bodyParser.json());
-    app.use(bodyParser.urlencoded({ extended: true }));
-
-    app.use(cors(
-        {
-            origin: "*"
-        }
-    ));
-
-    app.use((req, res, next) => {
-        res.setHeader('x-powered-by', 'Dim API');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
-        res.setHeader('Access-Control-Allow-Credentials', true);
-        next();
-    });
-    // </SESSION & CORS> //
-
-    // <RATELIMIT> //
-    let rlSettings = [10, 1000 * 60 * 60];
-    let rateLimits = {};
-    app.use("/v1/code/use", (req, res, next) => {
-        const token = req.query["_token"];
-        if (!token) return next();
-        const [maxRequests, resetMs] = rlSettings;
-        res.setHeader("x-award-ratelimit-limit", maxRequests);
-
-        const rlResponse = () => {
-            return res.json({
-                success: false,
-                message: "You are being rate limited. (" + Math.round((rateLimits[token].rate_limited - Date.now()) / 1000 / 60) + "mins)",
-                data: {
-                    resets_in: rateLimits[token].rate_limited - Date.now()
-                }
-            });
-        };
-
-        if (!rateLimits[token]) rateLimits[token] = {
-            requests: [],
-            rate_limited: false
-        };
-
-        if (rateLimits[token].rate_limited) {
-            if (Date.now() < rateLimits[token].rate_limited) {
-                res.setHeader("x-award-ratelimit-remaining", 0);
-                res.setHeader("x-award-ratelimit-reset", rateLimits[token].rate_limited - Date.now());
-                return rlResponse();
-            } else {
-                res.setHeader("x-award-ratelimit-remaining", maxRequests - 1);
-                rateLimits[token].rate_limited = false;
-            };
-        };
-
-        if (rateLimits[token].requests.filter(_r => (
-            (Date.now() - _r) < resetMs
-        )).length >= maxRequests) {
-            rateLimits[token] = {
-                requests: [],
-                rate_limited: Date.now() + resetMs
-            };
-
-            res.setHeader("x-award-ratelimit-remaining", 0);
-            res.setHeader("x-award-ratelimit-reset", resetMs);
-            return rlResponse();
-        } else {
-            rateLimits[token].requests = [...rateLimits[token].requests, Date.now()];
-            res.setHeader("x-award-ratelimit-remaining", maxRequests - rateLimits[token].requests.filter(_r => (Date.now() - _r) < resetMs).length);
-            next();
-        };
-    });
-    // </RATELIMIT> //
-
     // <API INFO> //
-    app.get("/", (req, res) => {
+    app.get("/v1", (req, res) => {
         res.json({
-            responseCode: 200,
-            Version: 1,
+            VersionNumber: 1,
+            VersionDetails: "The first version of DIM API",
+            FeaturesContained: {
+                Guilds: {
+                    Index: "INCLUDED",
+                    Settings: "INCLUDED"
+                },
+                Spaces: {
+                    Total: "STILL IN DEVELOPMENT",
+                    Summary: "INCLUDED",
+                    Punishments: {
+                        Total: "ALL INCLUDED",
+                        Warn: "INCLUDED",
+                        Ban: "INCLUDED",
+                        Mute: "INCLUDED",
+                        Kick: "INCLUDED"
+                    },
+                    Backup: {
+                        TOTAL: "NOT INCLUDED",
+                        Create: "NOT INCLUDED",
+                        Load: "NOT INCLUDED",
+                        View: "NOT INCLUDED",
+                        Remove: "NOT INCLUDED"
+                    },
+                    Roles: {
+                        TOTAL: "NOT INCLUDED",
+                        Add: "NOT INCLUDED",
+                        Remove: "NOT INCLUDED",
+                        View: "NOT INCLUDED"
+                    },
+                    Settings: {
+                        TOTAL: "NOT INCLUDED",
+                        Edit: "NOT INCLUDED",
+                        Delete: "NOT INCLUDED"
+                    }
+                }
+            }
         });
     });
     // </API INFO> //
 
+
+    
 
     // <USER COOKIE> //
     app.use(async (req, res, next) => {
@@ -260,6 +206,21 @@ module.exports = client => {
     const __spaceWarnAdd = require("./space/punishments/warn/add.js")(client);
     app.use("/v1/spaces", __spaceWarnAdd);
 
+    const __spaceWarnRemove = require("./space/punishments/warn/remove.js")(client);
+    app.use("/v1/spaces", __spaceWarnRemove);
+
+    const __spaceWarnEdit = require("./space/punishments/warn/edit.js")(client);
+    app.use("/v1/spaces", __spaceWarnEdit);
+
+    const __spaceWarnListByUser = require("./space/punishments/warn/listbyuserid.js")(client);
+    app.use("/v1/spaces", __spaceWarnListByUser);
+
+    const __spaceWarnListByWarn = require("./space/punishments/warn/listbywarnid.js")(client);
+    app.use("/v1/spaces", __spaceWarnListByWarn);
+
+    const __spaceWarnList = require("./space/punishments/warn/list.js")(client);
+    app.use("/v1/spaces", __spaceWarnList);
+
     /* Space APIS */
 
     const __spaceApiResponse = require("./space/api/autoresponse/index.js")(client);
@@ -271,30 +232,13 @@ module.exports = client => {
     const __spaceApiResponseMutes = require("./space/api/autoresponse/mute.js")(client);
     app.use("/v1/spaces", __spaceApiResponseMutes);
 
-
-
     
 
      // <AUTH & CONNECTIONS> //
      const __auths = require("./auth/index.js")({ router: app, path: config.authPath, connectionsPath: config.connectionsPath, client });
      Object.keys(__auths).forEach(__auth => app.use(__auths[__auth]));
      // </AUTH & CONNECTIONS> //
+
+     return app;
  
-
-    app.use((req, res) => {
-        try {
-            res.json({
-                success: false,
-                message: "Page was not found...",
-                data: null
-            });
-        } catch {};
-    });
-    // </404> //
-
-    // <LISTEN SERVER> //
-    server.listen(process.env.PORT || 424, () => {
-        console.log("(!) Server listening at ::" + (process.env.PORT || 424) + " port!");
-    });
-    // </LISTE
 }

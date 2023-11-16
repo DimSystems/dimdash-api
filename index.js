@@ -10,7 +10,7 @@ async function startSystem() {
     client.login(config.token).then(() => {
         console.log("(!) Connected to Discord as " + client.user.username + "!");
         console.log("[Create Server] Creating server...")
-        require('./api/v1/index')(client);
+        require('./api/index')(client);
       }).catch(err => {
         console.error(err+"Error occured while logging in");
       });
