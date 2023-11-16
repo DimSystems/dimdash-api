@@ -2,7 +2,8 @@ const { GatewayIntentBits } = require("discord.js");
 
 module.exports = {
   developers: [
-    "1174366663362224149"
+    "1174366663362224149",
+    "800739191381032960"
   ],
   mongoURL: "mongodb+srv://SkeldLife:Munashe_1978@bakumogodb.hdki7.mongodb.net/DimBotP",
   client: {
