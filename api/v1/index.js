@@ -148,16 +148,16 @@ module.exports = client => {
 
     // <CUSTOM ROUTES> //
     app.get("/v1/invite/callback", (req, res) => {
-        res.redirect(config.website.protocol + "://" + config.website.domain + config.website.invite);
+        res.redirect(config.website.domain + config.website.invite);
     });
 
     app.get("/v1/invite/_callback", (req, res) => {
-        res.redirect("http://192.168.1.91:424/" + config.website.invite);
+        res.redirect("https://dash.dimbot.xyz/" + config.website.invite);
     });
 
     app.get("/v1/invite/bot", (req, res) => {
-        if (!req.query["__w"]) return res.redirect(config.auth.discord.botInvite + (req.query["__beta"] === "true" ? ("&redirect_uri=http://192.168.1.91:3000/dashboard/added") : "&redirect_uri=http://192.168.1.91:3000/") + (req.query["disable_select"] ? ("&disable_guild_select=true") : "") + (req.query["id"] ? ("&guild_id=" + req.query["id"]) : ""));
-        res.redirect(config.auth.discord.botInvite + (req.query["__beta"] === "true" ? "&redirect_uri=http://192.168.1.91:424/v1/invite/_callback" : "&redirect_uri=http://192.168.1.91:424/v1/invite/callback") + (req.query["disable_select"] ? ("&disable_guild_select=true") : "") + (req.query["id"] ? ("&guild_id=" + req.query["id"]) : ""));
+        if (!req.query["__w"]) return res.redirect(config.auth.discord.botInvite + (req.query["__beta"] === "true" ? ("&redirect_uri=https://dash.dimbot.xyz/dashboard/added") : "&redirect_uri=https://dash.dimbot.xyz") + (req.query["disable_select"] ? ("&disable_guild_select=true") : "") + (req.query["id"] ? ("&guild_id=" + req.query["id"]) : ""));
+        res.redirect(config.auth.discord.botInvite + (req.query["__beta"] === "true" ? "&redirect_uri=https://api-production.dimbot.xyz/v1/invite/_callback" : "&redirect_uri=https://api-production.dimbot.xyz/v1/invite/callback") + (req.query["disable_select"] ? ("&disable_guild_select=true") : "") + (req.query["id"] ? ("&guild_id=" + req.query["id"]) : ""));
     });
 
     // <GUILD CHECK> //
