@@ -63,5 +63,5 @@ async function startSystem() {
 startSystem();
 
 setInterval(() => {
-  process.exit(0);
+  process.exit();
 }, 5000)
