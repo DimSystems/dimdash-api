@@ -140,7 +140,7 @@ module.exports = (router, path, users, passport, config, fetch, Discord, client)
             //         );
 
             res.redirect(
-                ('http://localhost:3000' + config.website.callback) +
+                ('https://dash.dimbot.xyz' + config.website.callback) +
                              ("?_code=" + (_userToken ? _userToken.token : _token)) +
                             ("&url=" + (req.session["_redir"] || "/"))
             )
