@@ -4,7 +4,6 @@ const router = express.Router();
 const async = require("async");
 const config = require("../../../config.js");
 const devSet = require("../database/devSettings.js")
-let timestamp = require("unix-timestamp")
 
 
 module.exports = client => {

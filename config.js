@@ -12,7 +12,7 @@ module.exports = {
       GatewayIntentBits.GuildMembers
     ]
 },
- authPath: "/v1/auth",
+ authPath: "/auth",
  sessionKey: "vhRYmP1A$zKdlge$#c8@@jLc!Gi5VO$yvl^nJCv2ZQba!%C",
   token: "MTE1MDQ4MjkyMDMyMzE3MDM5NQ.GWRaCD.ogTGEKJZhz3P0RCnJ2gmYb8H_ZZXu6HmCXQdi4",
   website: {
