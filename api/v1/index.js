@@ -161,7 +161,7 @@ module.exports = client => {
     });
 
     const __devMaintence = require("./developer/maintence")(client);
-    app.use("/v1", __devMaintence);
+    app.use("/", __devMaintence);
 
     // <GUILD CHECK> //
     const __guildCheck = require("./guild/check.js")(client);
