@@ -111,7 +111,7 @@ module.exports = client => {
 
     // GET VERSIONS
     const __Version1 = require("./v1/index")(client);
-    app.use("/", __Version1);
+    app.use("/v1", __Version1);
 
     app.use((req, res) => {
         try {

@@ -10,7 +10,7 @@ let users = require("./database/users.js")
 module.exports = client => {
 
     // <API INFO> //
-    app.get("/v1", (req, res) => {
+    app.get("/", (req, res) => {
         res.json({
             VersionNumber: 1,
             VersionDetails: "The first version of DIM API",
@@ -30,11 +30,11 @@ module.exports = client => {
                         Kick: "INCLUDED"
                     },
                     Backup: {
-                        TOTAL: "NOT INCLUDED",
-                        Create: "NOT INCLUDED",
-                        Load: "NOT INCLUDED",
-                        View: "NOT INCLUDED",
-                        Remove: "NOT INCLUDED"
+                        TOTAL: "INCLUDED",
+                        Create: "INCLUDED",
+                        Load: "INCLUDED",
+                        View: "INCLUDED",
+                        Remove: "INCLUDED"
                     },
                     Roles: {
                         TOTAL: "NOT INCLUDED",
@@ -58,7 +58,7 @@ module.exports = client => {
 
     // <USER COOKIE> //
     app.use(async (req, res, next) => {
-        if (!req.path.includes("/v1/connections")) return next();
+        if (!req.path.includes("/connections")) return next();
         if (!req.cookies["user_key"] && !req.query["_token"]) return next();
         const _loadUser = await users.findOne({ token: req.cookies["user_key"] || req.query["_token"] });
         if (!_loadUser || !_loadUser.profile) return next();
@@ -73,8 +73,8 @@ module.exports = client => {
 
       // <AUTHORIZATION> //
       app.use(async (req, res, next) => {
-        // if (req.path.includes("/v1/auth/login")) return next();
-        // if (req.path.includes("/v1/auth/callback")) return next();
+        // if (req.path.includes("/auth/login")) return next();
+        // if (req.path.includes("/auth/callback")) return next();
 
 
         if (!req.query["_token"]) return next();
@@ -89,15 +89,15 @@ module.exports = client => {
 
     // // <AUTHORIZATION CHECK> //
     // app.use((req, res, next) => {
-    //     if (req.path.includes("/v1/auth/login")) return next();
-    //     if (req.path.includes("/v1/auth/callback")) return next();
-    //     if (req.path.includes("/v1/connections")) return next();
-    //     if (req.path.includes("/v1/invite")) return next();
-    //     if (req.path.includes("/v1/others/stats")) return next();
-    //     if (req.path.includes("/v1/others/team")) return next();
-    //     if (req.path.includes("/v1/others/partners")) return next();
-    //     if (req.path.includes("/v1/giveaway/search")) return next();
-    //     if (req.path.endsWith("/overview") && req.path.includes("/v1/giveaway")) return next();
+    //     if (req.path.includes("/auth/login")) return next();
+    //     if (req.path.includes("/auth/callback")) return next();
+    //     if (req.path.includes("/connections")) return next();
+    //     if (req.path.includes("/invite")) return next();
+    //     if (req.path.includes("/others/stats")) return next();
+    //     if (req.path.includes("/others/team")) return next();
+    //     if (req.path.includes("/others/partners")) return next();
+    //     if (req.path.includes("/giveaway/search")) return next();
+    //     if (req.path.endsWith("/overview") && req.path.includes("/giveaway")) return next();
 
     //     if (!req.userAuth) {
     //         return res.json({
@@ -147,90 +147,103 @@ module.exports = client => {
     });
 
     // <CUSTOM ROUTES> //
-    app.get("/v1/invite/callback", (req, res) => {
+    app.get("/invite/callback", (req, res) => {
         res.redirect(config.website.domain + config.website.invite);
     });
 
-    app.get("/v1/invite/_callback", (req, res) => {
+    app.get("/invite/_callback", (req, res) => {
         res.redirect("https://dash.dimbot.xyz/" + config.website.invite);
     });
 
-    app.get("/v1/invite/bot", (req, res) => {
+    app.get("/invite/bot", (req, res) => {
         if (!req.query["__w"]) return res.redirect(config.auth.discord.botInvite + (req.query["__beta"] === "true" ? ("&redirect_uri=https://dash.dimbot.xyz/dashboard/added") : "&redirect_uri=https://dash.dimbot.xyz") + (req.query["disable_select"] ? ("&disable_guild_select=true") : "") + (req.query["id"] ? ("&guild_id=" + req.query["id"]) : ""));
-        res.redirect(config.auth.discord.botInvite + (req.query["__beta"] === "true" ? "&redirect_uri=https://api-production.dimbot.xyz/v1/invite/_callback" : "&redirect_uri=https://api-production.dimbot.xyz/v1/invite/callback") + (req.query["disable_select"] ? ("&disable_guild_select=true") : "") + (req.query["id"] ? ("&guild_id=" + req.query["id"]) : ""));
+        res.redirect(config.auth.discord.botInvite + (req.query["__beta"] === "true" ? "&redirect_uri=https://api-production.dimbot.xyz/invite/_callback" : "&redirect_uri=https://api-production.dimbot.xyz/invite/callback") + (req.query["disable_select"] ? ("&disable_guild_select=true") : "") + (req.query["id"] ? ("&guild_id=" + req.query["id"]) : ""));
     });
+
+    const __devMaintence = require("./developer/maintence")(client);
+    app.use("/v1", __devMaintence);
 
     // <GUILD CHECK> //
     const __guildCheck = require("./guild/check.js")(client);
-    app.use("/v1/guilds", __guildCheck);
+    app.use("/guilds", __guildCheck);
     // </GUILD CHECK> //
 
       // <GUILD CHECK> //
       const __guildConfig = require("./guild/configuration.js")(client);
-      app.use("/v1/guilds", __guildConfig);
+      app.use("/guilds", __guildConfig);
       // </GUILD CHECK> //
   
 
     const __userProfile = require("./user/id.js")(client);
-    app.use("/v1/user", __userProfile);
+    app.use("/user", __userProfile);
 
 
     /* Space EndPoints */
 
     const __spaceSummary = require("./space/index.js")(client);
-    app.use("/v1/spaces", __spaceSummary);
-
+    app.use("/spaces", __spaceSummary);
 
     const __spaceBanAdd = require("./space/punishments/ban/add.js")(client);
-    app.use("/v1/spaces", __spaceBanAdd);
+    app.use("/spaces", __spaceBanAdd);
 
     const __spaceBanRemove = require("./space/punishments/ban/remove.js")(client);
-    app.use("/v1/spaces", __spaceBanRemove);
-
+    app.use("/spaces", __spaceBanRemove);
 
     const __spaceBanList = require("./space/punishments/ban/list.js")(client);
-    app.use("/v1/spaces", __spaceBanList);
+    app.use("/spaces", __spaceBanList);
 
     const __spaceMuteAdd = require("./space/punishments/mute/add.js")(client);
-    app.use("/v1/spaces", __spaceMuteAdd);
+    app.use("/spaces", __spaceMuteAdd);
 
     const __spaceMuteList = require("./space/punishments/mute/list.js")(client);
-    app.use("/v1/spaces", __spaceMuteList);
+    app.use("/spaces", __spaceMuteList);
 
     const __spaceMuteRemove = require("./space/punishments/mute/remove.js")(client);
-    app.use("/v1/spaces", __spaceMuteRemove);
+    app.use("/spaces", __spaceMuteRemove);
 
     const __spaceKickAdd = require("./space/punishments/kick/add.js")(client);
-    app.use("/v1/spaces", __spaceKickAdd);
+    app.use("/spaces", __spaceKickAdd);
 
     const __spaceWarnAdd = require("./space/punishments/warn/add.js")(client);
-    app.use("/v1/spaces", __spaceWarnAdd);
+    app.use("/spaces", __spaceWarnAdd);
 
     const __spaceWarnRemove = require("./space/punishments/warn/remove.js")(client);
-    app.use("/v1/spaces", __spaceWarnRemove);
+    app.use("/spaces", __spaceWarnRemove);
 
     const __spaceWarnEdit = require("./space/punishments/warn/edit.js")(client);
-    app.use("/v1/spaces", __spaceWarnEdit);
+    app.use("/spaces", __spaceWarnEdit);
 
     const __spaceWarnListByUser = require("./space/punishments/warn/listbyuserid.js")(client);
-    app.use("/v1/spaces", __spaceWarnListByUser);
+    app.use("/spaces", __spaceWarnListByUser);
 
     const __spaceWarnListByWarn = require("./space/punishments/warn/listbywarnid.js")(client);
-    app.use("/v1/spaces", __spaceWarnListByWarn);
+    app.use("/spaces", __spaceWarnListByWarn);
 
     const __spaceWarnList = require("./space/punishments/warn/list.js")(client);
-    app.use("/v1/spaces", __spaceWarnList);
+    app.use("/spaces", __spaceWarnList);
+
+    const __spaceBackupAdd = require("./space/backups/create/index.js")(client);
+    app.use("/spaces", __spaceBackupAdd);
+
+    const __spaceBackupRemove = require("./space/backups/remove/index.js")(client);
+    app.use("/spaces", __spaceBackupRemove);
+
+    const __spaceBackupList = require("./space/backups/view/index.js")(client);
+    app.use("/spaces", __spaceBackupList);
+
+    const __spaceBackupLoad = require("./space/backups/load/index.js")(client);
+    app.use("/spaces", __spaceBackupLoad);
 
     /* Space APIS */
 
     const __spaceApiResponse = require("./space/api/autoresponse/index.js")(client);
-    app.use("/v1/spaces", __spaceApiResponse);
+    app.use("/spaces", __spaceApiResponse);
 
     const __spaceApiResponseBans = require("./space/api/autoresponse/ban.js")(client);
-    app.use("/v1/spaces", __spaceApiResponseBans);
+    app.use("/spaces", __spaceApiResponseBans);
 
     const __spaceApiResponseMutes = require("./space/api/autoresponse/mute.js")(client);
-    app.use("/v1/spaces", __spaceApiResponseMutes);
+    app.use("/spaces", __spaceApiResponseMutes);
 
     
 

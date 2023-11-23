@@ -1,20 +1,16 @@
-let backup = require("dim-backup");
 const express = require("express");
 const router = express.Router();
 let modal = require("../../../database/space");
-let modelBackup = require("../../../database/Backup");
-const modelRole = require("../../../database/spaceRole")
-const modelUser = require("../../../database/spaceUser")
-const modelUserWarn = require("../../../database/spaceUserWarn")
+let modalBackup = require("../../../database/Backup");
 const {ChannelType} = require("discord.js")
 let spaceModal = require("../../../database/space")
+let spaceRoleModal = require("../../../database/spaceRole")
 const users = require("../../../database/users.js");
+let async = require("async")
 
 module.exports = client => {
-    router.post("/:id/backup/remove", async (req, res) => {
+    router.get("/:id/backup/view", async (req, res) => {
         try {
-
-            let backupId = req.body["data"].backupId;
             let findSpace = await spaceModal.findOne({
                 CatagoryId: req.params["id"]
              })   
@@ -39,14 +35,33 @@ module.exports = client => {
              let checkPerms = await client.guilds.cache.get(findSpace.GuildId).members.fetch(`${findUser.user}`);
     
              if(checkPerms.roles.cache.has(findSpacePerms.OwnerId) || checkPerms.roles.cache.has(findSpacePerms.AdminId)){
-            
-                await modelBackup.findOne({ BackupId: backupId }).deleteOne().exec();
-
-                 res.json({
-                    success: true,
-                    message: "Backup removed."
+                let dataModel = await modal.findOne({
+                    CatagoryId: req.params.id
+                })
+    
+                let dataBackupM = await modalBackup.find({
+                    CatagoryId: dataModel.CatagoryId
                 })
 
+                let backuPArray = []
+
+                async.map(dataBackupM, async (b) => {
+                   
+                backuPArray.push(b);                    
+
+                }).finally(() => {
+
+                    res.json({
+                        success: true,
+                        message: "All backups",
+                        data: {
+                            backupData: backuPArray
+                        }
+                    })
+
+                })
+    
+            
              } else {
 
                return res.json({
