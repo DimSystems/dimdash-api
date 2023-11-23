@@ -72,9 +72,11 @@ res.json({
 
              }
        
-        } catch {
+        } catch (e) {
+            console.log(e);
             res.json({
                 success: false,
+                error: e
               });
         }
     })
