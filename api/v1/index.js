@@ -245,6 +245,9 @@ module.exports = client => {
     const __spaceApiResponseMutes = require("./space/api/autoresponse/mute.js")(client);
     app.use("/spaces", __spaceApiResponseMutes);
 
+    const __spaceApiFindMySpace = require("./space/api/autoresponse/myspaces.js")(client);
+    app.use("/spaces", __spaceApiFindMySpace);
+
     
 
      // <AUTH & CONNECTIONS> //

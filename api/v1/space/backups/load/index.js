@@ -59,36 +59,36 @@ module.exports = client => {
                     maxMessagesPerChannel: 100
                 }).then(async () => {
     
-                    let catagory1 = await fetchGuild.channels.cache.find(channel => channel.type == ChannelType.GuildCategory && channel.id == data.CatagoryId) 
+                    let catagory1 = await fetchGuild.channels.cache.find(channel => channel.type == ChannelType.GuildCategory && channel.id == dataModel.CatagoryId) 
     
                     catagory1.setName("[TEMPORARY]").then(async  () => {
-                        let catagory2 = await fetchGuild.channels.cache.find(channel => channel.type == ChannelType.GuildCategory && channel.name == data.spaceName) 
+                        let catagory2 = await fetchGuild.channels.cache.find(channel => channel.type == ChannelType.GuildCategory && channel.name == dataModel.spaceName) 
     
-                        let findWelcomeName = catagory1.children.cache.find(channel => channel.id == data.WelcomeChannel).name;
+                        let findWelcomeName = catagory1.children.cache.find(channel => channel.id == dataModel.WelcomeChannel).name;
     
                         console.log(findWelcomeName);
     
                             let welcomeName = catagory2.children.cache.find(channel => channel.name == findWelcomeName).id;
     
-                            const dataBackup2 = await modalBackup.find({ CatagoryId: data.CatagoryId });	
+                            const dataBackup2 = await modalBackup.find({ CatagoryId: dataModel.CatagoryId });	
                       
                      dataBackup2.forEach(async (db) => {
-                           await modalBackup.findOneAndUpdate({ CatagoryId: data.CatagoryId }, { CatagoryId: catagory2.id });
+                           await modalBackup.findOneAndUpdate({ CatagoryId: dataModel.CatagoryId }, { CatagoryId: catagory2.id });
                      });
                       
-                            await modal.findOneAndUpdate({ CatagoryId: data.CatagoryId }, { CatagoryId: catagory2.id, WelcomeChannel: welcomeName  })	
+                            await modal.findOneAndUpdate({ CatagoryId: dataModel.CatagoryId }, { CatagoryId: catagory2.id, WelcomeChannel: welcomeName  })	
     
-                        await modelUser.findOneAndUpdate({ SpaceBanId: data.CatagoryId }, { SpaceBanId: catagory2.id })	
+                        await modelUser.findOneAndUpdate({ SpaceBanId: dataModel.CatagoryId }, { SpaceBanId: catagory2.id })	
     
-                        await modelUserWarn.findOneAndUpdate({ SpaceId: data.CatagoryId }, { SpaceId: catagory2.id })	
+                        await modelUserWarn.findOneAndUpdate({ SpaceId: dataModel.CatagoryId }, { SpaceId: catagory2.id })	
     
-                        await modelRole.findOneAndUpdate({ CatagoryId: data.CatagoryId }, { CatagoryId: catagory2.id })	
+                        await modelRole.findOneAndUpdate({ CatagoryId: dataModel.CatagoryId }, { CatagoryId: catagory2.id })	
                         
                             catagory1.children.cache.forEach(channel => channel.delete());
     
                             catagory1.delete();
                       
-                            catagory2.children.cache.find(channel => channel.name == findWelcomeName).send(`Backup ${db.BackupName} (${db.BackupId}) has been loaded. No worries, everything has been moved so that it's seemless. Hope thats all you need. [Loaded via dashboard]`)
+                            catagory2.children.cache.find(channel => channel.name == findWelcomeName).send(`Backup ${dataBackupM.BackupName} (${dataBackupM.BackupId}) has been loaded. No worries, everything has been moved so that it's seemless. Hope thats all you need. [Loaded via dashboard]`)
     
                         return res.json({
                             success: true,

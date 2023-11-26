@@ -13,18 +13,44 @@ module.exports = client => {
             let findMaintence = await devSet.findOne({
                 isMaintence: true
             })
+
+            let findUser = await users.findOne({token: req.query['_token'] });
+            
             
             if(findMaintence == null) return res.json({
                 success: true,
                 state: false
             }) 
 
-            res.json({
-                success: true,
-                state: true, 
-                message: findMaintence.maintenceMsg,
-                date: findMaintence.maintenceDate || null
-            }) 
+            if(findUser !== null){
+                if(config.developers.includes(findUser.user)){
+                   return res.json({
+                        success: true,
+                        state: true, 
+                        message: findMaintence.maintenceMsg,
+                        date: findMaintence.maintenceDate || null,
+                        isDeveloper: true
+                    }) 
+                } else {
+                    return res.json({
+                        success: true,
+                        state: true, 
+                        message: findMaintence.maintenceMsg,
+                        date: findMaintence.maintenceDate || null,
+                        isDeveloper: false
+                    }) 
+                }
+            } else {
+                return res.json({
+                    success: true,
+                    state: true, 
+                    message: findMaintence.maintenceMsg,
+                    date: findMaintence.maintenceDate || null,
+                    isDeveloper: false
+                }) 
+            }
+
+           
 
             
 

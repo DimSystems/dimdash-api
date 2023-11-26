@@ -27,105 +27,18 @@ module.exports = (router, path, users, passport, config, fetch, Discord, client)
             const _token = `${await tokenGen(50)}`;
 
             if (!_userToken) {
-
-                var spaceArray = [];
-
-               
-
-                await  async.map(req.user.guilds, async (gu) => {
-
-                    let modalSpace = require("../../database/space");
-                    let modalRole = require("../../database/spaceRole")
-                    let dataSpace = await modalSpace.find({
-                        GuildId: gu.id
-                    })
-
-                    await async.forEach(dataSpace, async (space) => {
-                        let dataRole = await modalRole.findOne({
-                            CatagoryId: space.CatagoryId
-                        })
-
-                       let checkUserPermms = await client.guilds.cache.get(gu.id).members.fetch(`${req.user.id}`)
-
-
-                        if(checkUserPermms.roles.cache.has(dataRole.OwnerId) || checkUserPermms.roles.cache.has(dataRole.AdminId)){
-
-                            const _userToken2 = await users.findOne({ user: req.user.id, spaces: [space] });
-      
-                            if(_userToken2) return;
-                            
-
-                             await users.updateOne({ user: req.user.id }, {
-                                $push: {
-                                    spaces: space
-                                }
-                            }, { upsert: true });
-                        } else {
-                            return;
-                        }
-                    })
-
-                }).finally(async () => {
-                    await users.updateOne({ user: req.user.id }, {
-                        profile: req.user,
-                        token: _token,
-                        spaces: spaceArray
-                    }, { upsert: true });
-                })
          
+                await users.updateOne({ user: req.user.id }, {
+                    profile: req.user,
+                    token: _token,
+                }, { upsert: true });
 
             } else {
 
-                var spaceArray = []
-
-                await  async.map(req.user.guilds, async (gu) => {
-
-                    let modalSpace = require("../../database/space");
-                    let modalRole = require("../../database/spaceRole")
-                    let dataSpace = await modalSpace.find({
-                        GuildId: gu.id
-                    })
-
+                await users.updateOne({ user: req.user.id }, {
+                    profile: req.user,
+                }, { upsert: true });
                 
-                    await async.map(dataSpace, async (space) => {
-
-                     
-
-                        let dataRole = await modalRole.findOne({
-                            CatagoryId: space.CatagoryId
-                        })
-
-
-                        if(dataRole == null) return res.json({
-                            success: false,
-                            message: "CONFIGURE_ROLE_REQUIRED - Configure your space roles for"+space.spaceName,
-                            data: null
-                        })
-
-                       let checkUserPermms = await client.guilds.cache.get(gu.id).members.fetch(`${req.user.id}`)
-
-
-                        if(checkUserPermms.roles.cache.has(dataRole.OwnerId) || checkUserPermms.roles.cache.has(dataRole.AdminId)){
-                            const _userToken2 = await users.findOne({ user: req.user.id, spaces: [space] });
-      
-                            if(_userToken2) return;
-
-                             await users.updateOne({ user: req.user.id }, {
-                                $push: {
-                                    spaces: space
-                                }
-                            }, { upsert: true });
-                        } else {
-                            return;
-                        }
-                    })
-                }).finally(async () => {
-                    await users.updateOne({ user: req.user.id }, {
-                        profile: req.user,
-                    }, { upsert: true });
-                })
-
-               
             };
 
             res.cookie("user_key", _userToken ? _userToken.token : _token, {

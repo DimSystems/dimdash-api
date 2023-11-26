@@ -29,8 +29,6 @@ module.exports = client => {
             data: null
          })
 
-         console.log()
-
          let checkPerms = await client.guilds.cache.get(findSpace.GuildId).members.fetch(`${findUser.user}`);
 
          if(checkPerms.roles.cache.has(findSpacePerms.OwnerId) || checkPerms.roles.cache.has(findSpacePerms.OwnerId).roles.cache.has(findSpacePerms.Adminid)){
