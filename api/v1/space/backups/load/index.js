@@ -16,6 +16,10 @@ module.exports = client => {
         try {
             let backupId = req.body["data"].backupId;
 
+            if(backupId == null){
+                return res.json({success: false, message: "A proper id is required!"});
+            }
+
             let findSpace = await spaceModal.findOne({
                 CatagoryId: req.params["id"]
              })   
@@ -47,13 +51,10 @@ module.exports = client => {
                 let dataBackupM = await modalBackup.findOne({
                     BackupId: backupId
                 })
+
+                if(dataBackupM == null) return res.json({success: false, message: "Backup was not found. Possibly deleted?"});
     
                 let fetchGuild = client.guilds.cache.get(dataModel.GuildId);
-    
-    
-                let data = await spaceModal.findOne({
-                    CatagoryId: req.params["id"]
-                 })   
     
                 await backup.loadSpace(dataBackupM.BackupData, fetchGuild, {
                     maxMessagesPerChannel: 100
@@ -107,10 +108,10 @@ module.exports = client => {
             
             
     
-        } catch {
+        } catch (e) {
             return res.json({
                 success: false,
-                message: "An error occured"
+                message: "An error occured"+e
             })
         }
     })

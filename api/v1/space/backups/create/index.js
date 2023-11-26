@@ -10,7 +10,7 @@ let modalBackup = require("../../../database/Backup.js");
 module.exports = client => {
     router.post("/:id/backup/create", async (req, res) => {
         try {
-            let backupLabel = req.body["data"].backupLabel;
+            let backupLabel = req.body["data"]?.backupLabel || "Unspecified Label.";
 
             let findSpace = await spaceModal.findOne({
                 CatagoryId: req.params["id"]
@@ -49,7 +49,7 @@ module.exports = client => {
                               new modalBackup({
                                   GuildId: fetchGuild.id,
                                   CatagoryId: findSpace.CatagoryId,
-                                  BackupName: backupLabel,
+                                  BackupName: backupLabel || "Unknown",
                                   BackupId: parsedBC.id,
                                   BackupData: bc
                       }).save();
@@ -57,7 +57,7 @@ module.exports = client => {
                       res.json({
                         success: true,
                         message: "Backup has been created",
-                        data: true
+                        data: bc
                       });
                   })
     
@@ -76,7 +76,7 @@ res.json({
             console.log(e);
             res.json({
                 success: false,
-                error: e
+                error: `${e}`
               });
         }
     })
